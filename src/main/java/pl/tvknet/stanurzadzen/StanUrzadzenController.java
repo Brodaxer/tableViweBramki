@@ -2,6 +2,8 @@ package pl.tvknet.stanurzadzen;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -50,6 +52,8 @@ public class StanUrzadzenController {
     private ComboBox<String> nowyStan ;
     @FXML
     private Button NoweUrzadzenie;
+    @FXML
+    private TextField filtrowanieTabeli;
 
 
 
@@ -80,7 +84,7 @@ public class StanUrzadzenController {
 
 
     public void fill(){
-        urzadzenieMagazyns.clear();
+        //urzadzenieMagazyns.clear();
 
         try{
             query = "SELECT * FROM barmki";
@@ -185,11 +189,36 @@ public class StanUrzadzenController {
     UrzadzenieMagazyn urzadzenieMagazyn = null;
 
     public void initialize() throws SQLException {
-        nowyStan.setItems(comboboxStan);
         connection = KomunikacjaSQL.getConnection();
         intializeCells();
-
         fill();
+        FilteredList<UrzadzenieMagazyn> urzadzenieMagazynFilteredList =new FilteredList<>(urzadzenieMagazyns, p-> true);
+        filtrowanieTabeli.textProperty().addListener((observable ,oldValue,newValue) -> urzadzenieMagazynFilteredList.setPredicate(bramki -> {
+            if(newValue == null || newValue.isEmpty()){
+                return true;
+            }
+            String loverCaseText = newValue.toLowerCase();
+
+            if (bramki.getModel().toLowerCase().contains(loverCaseText)){
+                return true;
+            } else if (bramki.getSerialNumber().toLowerCase().contains(loverCaseText)) {
+                return true;
+            } else if (bramki.getMAC().toLowerCase().contains(loverCaseText)) {
+                return true;
+            } else if (bramki.getLokalizacja().toLowerCase().contains(loverCaseText)) {
+                return true;
+            }
+            return false;
+        }));
+        SortedList<UrzadzenieMagazyn> sortedUrzadzeniaMagazyn = new SortedList<>(urzadzenieMagazynFilteredList);
+        sortedUrzadzeniaMagazyn.comparatorProperty().bind(tabelaUrzadzen.comparatorProperty());
+        tabelaUrzadzen.setItems(sortedUrzadzeniaMagazyn);
+
+        nowyStan.setItems(comboboxStan);
+
+
+
+
 
 
 
